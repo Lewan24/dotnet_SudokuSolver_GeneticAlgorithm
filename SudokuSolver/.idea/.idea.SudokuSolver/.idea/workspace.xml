@@ -8,6 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1dfcdeb6-3792-4dc2-8315-c7d7628cfe4f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/App/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/App/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -17,6 +18,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/68b06b8592b1287fd78f3ee68566d6a38d6e2f45b9a9e6ebd4d0e9972f7c29/Object.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="2WvOHtzigIGn0Kgr0JCvt5SnGtK" />
   <component name="ProjectViewState">
@@ -72,7 +76,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1697609502139</updated>
-      <workItem from="1697609503365" duration="4640000" />
+      <workItem from="1697609503365" duration="11811000" />
     </task>
     <servers />
   </component>

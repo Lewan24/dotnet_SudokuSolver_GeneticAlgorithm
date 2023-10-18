@@ -54,11 +54,16 @@ var sudokuBoard = new[,]
 var sudoku = new Sudoku(sudokuBoard);
 var sudokuSolver = new GeneticSudokuSolver(sudoku);
 
-var possibilities = sudokuSolver.FindPossibleSolutions();
+sudoku.ShowFitness();
+sudoku.Board[0, 3] = 2;
+sudoku.CalculateFitness();
+sudoku.ShowFitness();
 
-General.ShowPossibleSolutions(possibilities);
-General.ShowBoard(sudokuBoard);
-General.ShowEmptyCells(possibilities);
+// var possibilities = sudokuSolver.FindPossibleSolutions();
+//
+// General.ShowPossibleSolutions(possibilities);
+// General.ShowBoard(sudokuBoard);
+// General.ShowEmptyCells(possibilities);
 
 /// <summary>
 /// Sudoku class that contains Board and fitness value that shows how good is board solved
@@ -68,7 +73,7 @@ sealed class Sudoku
     public int[,] SourceBoard { get; }
     public int[,] Board { get; set; }
     public int Fitness => _fitness;
-    private int _fitness;
+    private int _fitness = 0;
 
     private const int SolvedSudokuFitness = 81;
     
@@ -76,8 +81,6 @@ sealed class Sudoku
     {
         Board = board;
         SourceBoard = board;
-
-        _fitness = SolvedSudokuFitness;
         
         CalculateFitness(true);
     }
@@ -91,8 +94,14 @@ sealed class Sudoku
             : sudokuSolver.FindPossibleSolutionsForSpecificBoard(Board);
 
         _fitness = SolvedSudokuFitness - General.ShowEmptyCells(possibilities, true);
+        _fitness -= sudokuSolver.GetWrongSolutions(Board);
         
         return Fitness;
+    }
+
+    public void ShowFitness()
+    {
+        Console.WriteLine($"Fitness: {Fitness}");
     }
 }
 
@@ -155,42 +164,96 @@ sealed class GeneticSudokuSolver
     private void FindPossibleSolutions(int[,] board, ref List<SudokuCellPossibilities> possibilities)
     {
         for (var row = 0; row < 9; row++)
+            for (var col = 0; col < 9; col++)
+            {
+                if (board[row, col] != 0)
+                {
+                    var cell = new SudokuCellPossibilities(row, col, null);
+                    cell.Value = board[row, col];
+                    possibilities.Add(cell);
+
+                    continue;
+                }
+
+                var possible = new List<int>();
+                for (var num = 1; num <= 9; num++)
+                    if (IsSafe(board, row, col, num))
+                        possible.Add(num);
+
+                possibilities.Add(new SudokuCellPossibilities(row, col, possible));
+            }
+    }
+
+    public int GetWrongSolutions(int[,] board)
+    {
+        var wrongSolutions = 0;
+        
+        for (var row = 0; row < 9; row++)
         for (var col = 0; col < 9; col++)
         {
-            if (board[row, col] != 0)
-            {
-                var cell = new SudokuCellPossibilities(row, col, null);
-                cell.Value = board[row, col];
-                possibilities.Add(cell);
-
+            if (board[row, col] == 0)
                 continue;
+
+            if (!IsUnSafe(board, row, col)) continue;
+            
+            wrongSolutions++;
+            break;
+        }
+
+        return wrongSolutions;
+    }
+    
+    public bool IsSafe(int[,] workingBoard, int row, int col, int num)
+    {
+        // Check Row and Column
+        for (var i = 0; i < 9; i++)
+            if (workingBoard[row, i] == num || workingBoard[i, col] == num)
+                return false;
+
+        // Check 3x3
+        var startRow = row - row % 3;
+        var startCol = col - col % 3;
+        for (var i = 0; i < 3; i++)
+        for (var j = 0; j < 3; j++)
+            if (workingBoard[i + startRow, j + startCol] == num)
+                return false;
+
+        return true;
+    }
+    
+    public bool IsUnSafe(int[,] workingBoard, int row, int col)
+    {
+        var counter = 0;
+        var num = workingBoard[row, col];
+        
+        // Check Row and Column
+        for (var i = 0; i < 9; i++)
+        {
+            if (workingBoard[row, i] == num || workingBoard[i, col] == num)
+            {
+                counter++;
+
+                if (counter > 2)
+                    return true;
+            }
+        }
+
+        counter = 0;
+        
+        // Check 3x3
+        var startRow = row - row % 3;
+        var startCol = col - col % 3;
+        for (var i = 0; i < 3; i++)
+        for (var j = 0; j < 3; j++)
+            if (workingBoard[i + startRow, j + startCol] == num)
+            {
+                counter++;
+
+                if (counter >= 2)
+                    return true;
             }
 
-            var possible = new List<int>();
-            for (var num = 1; num <= 9; num++)
-                if (IsSafe(board, row, col, num))
-                    possible.Add(num);
-
-            possibilities.Add(new SudokuCellPossibilities(row, col, possible));
-        }
-
-        bool IsSafe(int[,] workingBoard, int row, int col, int num)
-        {
-            // Check Row and Column
-            for (var i = 0; i < 9; i++)
-                if (workingBoard[row, i] == num || workingBoard[i, col] == num)
-                    return false;
-
-            // Check 3x3
-            var startRow = row - row % 3;
-            var startCol = col - col % 3;
-            for (var i = 0; i < 3; i++)
-            for (var j = 0; j < 3; j++)
-                if (workingBoard[i + startRow, j + startCol] == num)
-                    return false;
-
-            return true;
-        }
+        return false;
     }
 }
 
