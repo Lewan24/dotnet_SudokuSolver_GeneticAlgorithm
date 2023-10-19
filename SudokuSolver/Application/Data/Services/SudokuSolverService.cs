@@ -5,13 +5,60 @@ using Core.Entities;
 
 namespace Application.Data.Services;
 
+/// <summary>
+/// Settings for SudokuSolverService that contains needed data to run Genetic Algorithm
+/// </summary>
+public class ServiceSettings
+{
+    [Range(2, 1_000)]
+    public int PopulationSize { get; set; } = 10;
+    
+    [Range(0.1f, 0.5f)]
+    public double MutationRate { get; set; } = 0.1f;
+    
+    [Range(10, Int32.MaxValue)]
+    public int MaxGenerations { get; set; } = 100;
+}
+
+/// <summary>
+/// Sudoku solver service that manages sudoku board, genetic solving etc.
+/// </summary>
 public class SudokuSolverService : ISudokuSolverService
 {
+    #region Hyper Parameters
+    private readonly ServiceSettings _settings = new();
+    #endregion
+    
+    private Sudoku _sourceSudoku;
+    private Sudoku _bestSudokuSolution;
+    private static Random _random = new();
+
+    public SudokuSolverService() { }
+
+    public SudokuSolverService(ServiceSettings settings)
+    {
+        _settings = settings;
+    }
+
     public Task Run(string sudokuFilePathName)
     {
-        Cell[,] sudokuBoard = SudokuBoardGeneral.ReadSudokuBoardFromFile(sudokuFilePathName);
-        GeneralIO.ShowBoard(sudokuBoard);
+        var validationContext = new ValidationContext(_settings, null, null);
+        var validationResults = new List<ValidationResult>();
 
+        bool isValid = Validator.TryValidateObject(_settings, validationContext, validationResults, true);
+
+        if (!isValid)
+            throw new Exception("Settings are not configured well. Fix them first and try again");
+        
+        Cell[,] sudokuBoard = SudokuBoardGeneral.ReadSudokuBoardFromFile(sudokuFilePathName);
+        //GeneralIO.ShowBoard(sudokuBoard);
+        
+        _sourceSudoku = new(sudokuBoard)
+        {
+            Fitness = CalculateFitness(sudokuBoard)
+        };
+
+        _bestSudokuSolution = new Sudoku(_sourceSudoku.Board);
         
         //var result = sudokuSolver.Solve();
         //General.ShowBoard(result.Board);
@@ -26,30 +73,9 @@ public class SudokuSolverService : ISudokuSolverService
 /// </summary>
 sealed class GeneticSudokuSolver
 {
-    #region Public Settings
-
-    [Range(2, 1_000)]
-    public int PopulationSize { get; set; } = 10;
-    [Range(0.1f, 0.5f)]
-    public double MutationRate { get; set; } = 0.1f;
-    [Range(10, Int32.MaxValue)]
-    public int MaxGenerations { get; set; } = 100;
-
-    #endregion
-
-    private Sudoku _sourceSudoku;
-    private Sudoku _bestSudokuSolution;
-    private static Random _random = new();
     
-    public GeneticSudokuSolver(int[,] board)
-    {
-        _sourceSudoku = new(board)
-        {
-            Fitness = CalculateFitness(board)
-        };
-
-        _bestSudokuSolution = new Sudoku(_sourceSudoku.Board);
-    }
+    
+    
 
     /// <summary>
     /// Solve sourceSudoku using genetic algorithm

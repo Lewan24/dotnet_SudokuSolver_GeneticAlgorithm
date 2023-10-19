@@ -5,10 +5,10 @@ namespace Core.Entities;
 /// </summary>
 public sealed class Sudoku
 {
-    public int[,] Board { get; set; }
+    public Cell[,] Board { get; set; }
     public int Fitness { get; set; }
     
-    public Sudoku(int[,] board)
+    public Sudoku(Cell[,] board)
     {
         Board = board;
     }

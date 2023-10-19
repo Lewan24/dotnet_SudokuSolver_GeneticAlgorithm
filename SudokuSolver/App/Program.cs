@@ -36,7 +36,14 @@
 using Application.Data.Interfaces;
 using Application.Data.Services;
 
-var filePath = "sudoku.txt";
+var filePathWithSudokuBoard = "sudoku.txt";
 
-ISudokuSolverService sudokuSolver = new SudokuSolverService();
-await sudokuSolver.Run(filePath);
+var serviceSettings = new ServiceSettings()
+{
+  PopulationSize = 10,
+  MaxGenerations = 1000,
+  MutationRate = 0.1f
+};
+
+ISudokuSolverService sudokuSolver = new SudokuSolverService(serviceSettings);
+await sudokuSolver.Run(filePathWithSudokuBoard);
