@@ -8,10 +8,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1dfcdeb6-3792-4dc2-8315-c7d7628cfe4f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/App/sudoku.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Application/Data/Interfaces/ISudokuSolverService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Application/Data/Services/SudokuSolverService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Application/Data/Static Classess/GeneralIO.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Application/Data/Static Classess/SudokuBoardGeneral.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Core/Entities/RecordEntities.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Core/Entities/Sudoku.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Core/Entities/SudokuCellPossibilities.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/App/App.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/App/App.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/App/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/App/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SudokuSolver.sln" beforeDir="false" afterPath="$PROJECT_DIR$/SudokuSolver.sln" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,7 +90,7 @@
       <option name="presentableId" value="Default" />
       <updated>1697609502139</updated>
       <workItem from="1697609503365" duration="25939000" />
-      <workItem from="1697704138476" duration="3851000" />
+      <workItem from="1697704138476" duration="4994000" />
     </task>
     <servers />
   </component>
