@@ -12,7 +12,7 @@ public static class GeneralIO
     /// Show on console selected board
     /// </summary>
     /// <param name="board">Board as int[,] that contains board cells</param>
-    public static void ShowBoard(Cell[,] board)
+    public static void ShowBoard((int Value, bool IsDefaultSource, bool IsGood)[,] board)
     {
         Console.WriteLine("\nBoard:");
 

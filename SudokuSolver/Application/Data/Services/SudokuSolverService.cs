@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Intrinsics.X86;
 using Application.Data.Interfaces;
 using Application.Data.Static_Classess;
 using Core.Entities;
@@ -33,78 +34,79 @@ public class SudokuSolverService : ISudokuSolverService
     private Sudoku _bestSudokuSolution;
     private static Random _random = new();
 
-    public SudokuSolverService() { }
+    public SudokuSolverService(){}
 
     public SudokuSolverService(ServiceSettings settings)
     {
         _settings = settings;
     }
 
+    /// <summary>
+    /// Run service // Initialize, prepare and run all needed functions and algorithms to solve sudoku using genetic algorithm
+    /// </summary>
+    /// <param name="sudokuFilePathName">File path to .txt file where is the sudoku board</param>
+    /// <returns></returns>
+    /// <exception cref="Exception">Throws an exception if settings are not configured well. There is a simple data annotations validator</exception>
     public Task Run(string sudokuFilePathName)
     {
-        var validationContext = new ValidationContext(_settings, null, null);
-        var validationResults = new List<ValidationResult>();
-
-        bool isValid = Validator.TryValidateObject(_settings, validationContext, validationResults, true);
-
-        if (!isValid)
+        var validationResult = ValidateSettings(sudokuFilePathName);
+        if (!validationResult)
             throw new Exception("Settings are not configured well. Fix them first and try again");
-        
-        Cell[,] sudokuBoard = SudokuBoardGeneral.ReadSudokuBoardFromFile(sudokuFilePathName);
-        //GeneralIO.ShowBoard(sudokuBoard);
+
+        (int Value, bool IsDefaultSource, bool IsGood)[,] sudokuBoard = SudokuBoardGeneral.ReadSudokuBoardFromFile(sudokuFilePathName);
         
         _sourceSudoku = new(sudokuBoard)
         {
             Fitness = CalculateFitness(sudokuBoard)
         };
 
-        _bestSudokuSolution = new Sudoku(_sourceSudoku.Board);
+        _bestSudokuSolution = new(new (int Value, bool IsDefaultSource, bool IsGood)[9,9]);
+        Array.Copy(_sourceSudoku.Board, _bestSudokuSolution.Board, _sourceSudoku.Board.Length);
         
-        //var result = sudokuSolver.Solve();
-        //General.ShowBoard(result.Board);
+        var result = Solve();
+        Console.WriteLine($"Best sudoku with '{result.ShowFitness(true)}'");
+        GeneralIO.ShowBoard(result.Board);
         
         return Task.CompletedTask;
     }
-}
+    
+    private bool ValidateSettings(string sudokuFilePathName)
+    {
+        var validationContext = new ValidationContext(_settings, null, null);
+        var validationResults = new List<ValidationResult>();
 
-/// <summary>
-/// Class that solves sourceSudoku board.
-/// For now it just finds possible solutions.
-/// </summary>
-sealed class GeneticSudokuSolver
-{
+        return Validator.TryValidateObject(_settings, validationContext, validationResults, true);
+    }
     
-    
-    
-
     /// <summary>
     /// Solve sourceSudoku using genetic algorithm
     /// </summary>
     /// <returns><see cref="Sudoku"/> with solved board</returns>
-    public Sudoku Solve()
+    private Sudoku Solve()
     {
         List<Sudoku> sudokuList = new();
         
         CreateFirstPopulation(ref sudokuList);
-        ShowPopulationInfo(sudokuList, isFirstPopulation: true);
+        ShowPopulationInfo(sudokuList, true, isFirstPopulation: true);
 
         FillUpSudoku(ref sudokuList);
 
-        ShowPopulationInfo(sudokuList);
+        ShowPopulationInfo(sudokuList, true);
         
         RunEvolutionProcess(sudokuList);
 
+        _bestSudokuSolution.Fitness = CalculateFitness(_bestSudokuSolution.Board);
         return _bestSudokuSolution;
     }
-
+    
     /// <summary>
     /// Duplicate source sudoku to list that's count is population number.
     /// </summary>
     private void CreateFirstPopulation(ref List<Sudoku> sudokuList)
     {
-        for (var i = 0; i < PopulationSize; i++)
+        for (var i = 0; i < _settings.PopulationSize; i++)
         {
-            var newSudoku = new Sudoku(new int[9, 9]);
+            var newSudoku = new Sudoku(new (int Value, bool IsDefaultSource, bool IsGood)[9,9]);
             Array.Copy(_sourceSudoku.Board, newSudoku.Board, _sourceSudoku.Board.Length);
             
             newSudoku.Fitness = CalculateFitness(newSudoku.Board);
@@ -124,6 +126,8 @@ sealed class GeneticSudokuSolver
         if (isFirstPopulation)
         {
             Console.WriteLine($"First population sudoku Fitness: {_sourceSudoku.ShowFitness(returnString: true)}");
+            if (showBoard)
+                GeneralIO.ShowBoard(_sourceSudoku.Board);
             return;
         }
         
@@ -132,9 +136,8 @@ sealed class GeneticSudokuSolver
             var sudoku = sudokuList[index];
             
             Console.WriteLine($"Sudoku nr {index + 1}. Fitness: {sudoku.ShowFitness(returnString: true)}");
-            // Todo: prepare new way of showing board using Cell[,]
-            // if (showBoard)
-            //     General.ShowBoard(sudoku.Board);
+            if (showBoard)
+                GeneralIO.ShowBoard(sudoku.Board);
             Console.WriteLine();
         }
     }
@@ -149,7 +152,7 @@ sealed class GeneticSudokuSolver
             for (var row = 0; row < 9; row++)
             for (var col = 0; col < 9; col++)
             {
-                if (sudoku.Board[row, col] != 0) continue;
+                if (sudoku.Board[row, col].Value != 0) continue;
                 
                 fillup:
                 var num = _random.Next(1, 10);
@@ -157,18 +160,18 @@ sealed class GeneticSudokuSolver
                 if (!IsSafe(sudoku.Board, row, col, num, false, true))
                     goto fillup;
                     
-                sudoku.Board[row, col] = num;
+                sudoku.Board[row, col].Value = num;
             }
             
             sudoku.Fitness = CalculateFitness(sudoku.Board);
         }
     }
-    
+
     private void RunEvolutionProcess(List<Sudoku> sudokuList)
     {
         var population = sudokuList;
         
-        for (var generation = 0; generation < MaxGenerations; generation++)
+        for (var generation = 0; generation < _settings.MaxGenerations; generation++)
         {
             foreach (var sudoku in population)
                 sudoku.Fitness = CalculateFitness(sudoku.Board);
@@ -184,7 +187,7 @@ sealed class GeneticSudokuSolver
             var parents = SelectParents(population);
 
             var newPopulation = new List<Sudoku>();
-            for (var i = 0; i < population.Count; i += 2)
+            for (var i = 0; i < parents.Count; i += 2)
             {
                 // Cross over parents
                 var children = Crossover(parents[i], parents[i + 1]);
@@ -202,14 +205,25 @@ sealed class GeneticSudokuSolver
     /// <param name="board"></param>
     /// <param name="firstCalculate">Check if it's the first calculation (during creating constructor)</param>
     /// <returns>Fitness is an int number of how good the solution is</returns>
-    private int CalculateFitness(int[,] board, bool firstCalculate = false)
+    private int CalculateFitness((int Value, bool IsDefaultSource, bool IsGood)[,] board, bool firstCalculate = false)
     {
         var possibilities = firstCalculate
             ? FindPossibleSolutions()
             : FindPossibleSolutionsForSpecificBoard(board);
         
-        var newFitness = 81 - GeneralIO.ShowEmptyCells(possibilities, true);
+        for (var row = 0; row < 9; row++)
+        for (var col = 0; col < 9; col++)
+        {
+            if (board[row, col].Value != 0 && !IsUnSafe(board, row, col))
+            {
+                board[row, col].IsGood = true;
+                continue;
+            }
+                
+            board[row, col].IsGood = false;
+        }
         
+        var newFitness = 81 - GeneralIO.ShowEmptyCells(possibilities, true);
         newFitness -= GetWrongSolutions(board);
 
         return newFitness;
@@ -220,7 +234,7 @@ sealed class GeneticSudokuSolver
     /// </summary>
     /// <returns>List of <see cref="Sudoku"/> that contains half of population number best parents to reproduce // the highest Fitness rate</returns>
     private List<Sudoku> SelectParents(List<Sudoku> sudokuList) => 
-        sudokuList.OrderByDescending(sudoku => sudoku.Fitness).Take((PopulationSize / 2) % 2 == 0 ? PopulationSize / 2 : (PopulationSize / 2) + 1).ToList();
+        sudokuList.OrderByDescending(sudoku => sudoku.Fitness).Take((_settings.PopulationSize / 2) % 2 == 0 ? _settings.PopulationSize / 2 : (_settings.PopulationSize / 2) + 1).ToList();
 
     private List<Sudoku> Crossover(Sudoku parent1, Sudoku parent2)
     {
@@ -240,12 +254,12 @@ sealed class GeneticSudokuSolver
         return children;
     }
 
-    public Sudoku CrossParentsIntoChild((Sudoku parent1, Sudoku Parent2) parents, bool reverseCross)
+    private Sudoku CrossParentsIntoChild((Sudoku parent1, Sudoku Parent2) parents, bool reverseCross)
     {
         var sudokuBoard1 = parents.parent1.Board;
         var sudokuBoard2 = parents.Parent2.Board;
 
-        var childBoard = new int[9, 9];
+        var childBoard = new (int Value, bool IsDefaultSource, bool IsGood)[9,9];
 
         // Copy top row from parent 1
         for (var row = 0; row < 3; row++)
@@ -257,7 +271,7 @@ sealed class GeneticSudokuSolver
             for (var col = 0; col < 3; col++)
                 childBoard[row, col] = sudokuBoard1[row - 3, col];
 
-        var whichParent = _random.NextDouble() <= MutationRate;
+        var whichParent = _random.NextDouble() <= _settings.MutationRate;
         
         // Copy middle row middle column from parent 1 or parent 2, depends on mutation chance rate
         for (var row = 3; row < 6; row++)
@@ -281,12 +295,29 @@ sealed class GeneticSudokuSolver
     // Todo: implement mutation
     private void Mutate(ref Sudoku child)
     {
-        for (var i = 0; i < 9; i++)
+        for (var row = 0; row < 3; row++)
+        for (var col = 0; col < 3; col++)
         {
             var mutationChance = _random.NextDouble();
 
-            if (mutationChance <= MutationRate)
-                child.Board[0, 0] = 1;
+            if (!(mutationChance <= _settings.MutationRate)) continue;
+            
+            var startRow = row * 3; // 3 // max is 5
+            var startCol = col * 3; // 3 // max is 5
+            // get 2 random cells that are not default by source and swap them.
+                
+            getRandomCells:
+            (int X, int Y) cell1xy = new (_random.Next(0, 3), _random.Next(0, 3));
+            (int X, int Y) cell2xy = new (_random.Next(0, 3), _random.Next(0, 3));
+            
+            var cell1 = child.Board[startRow + cell1xy.Y, startCol + cell1xy.X];
+            var cell2 = child.Board[startRow + cell2xy.Y, startCol + cell2xy.X];
+
+            if (cell1.IsDefaultSource || cell2.IsDefaultSource)
+                goto getRandomCells;
+            
+            child.Board[startRow + cell1xy.Y, startCol + cell1xy.X] = cell2;
+            child.Board[startRow + cell2xy.Y, startCol + cell2xy.X] = cell1;
         }
     }
     
@@ -306,7 +337,7 @@ sealed class GeneticSudokuSolver
     /// Finds possible solutions to empty cells for specific board
     /// </summary>
     /// <returns>List of <see cref="SudokuCellPossibilities"/> that contains information about cell position, value and possible solutions</returns>
-    private List<SudokuCellPossibilities> FindPossibleSolutionsForSpecificBoard(int[,] board)
+    private List<SudokuCellPossibilities> FindPossibleSolutionsForSpecificBoard((int Value, bool IsDefaultSource, bool IsGood)[,] board)
     {
         var possibilities = new List<SudokuCellPossibilities>();
         FindPossibleSolutions(board, ref possibilities);
@@ -315,15 +346,15 @@ sealed class GeneticSudokuSolver
     }
     
     // Methods used to find possible sourceSudoku cells solutions
-    private void FindPossibleSolutions(int[,] board, ref List<SudokuCellPossibilities> possibilities)
+    private void FindPossibleSolutions((int Value, bool IsDefaultSource, bool IsGood)[,] board, ref List<SudokuCellPossibilities> possibilities)
     {
         for (var row = 0; row < 9; row++)
             for (var col = 0; col < 9; col++)
             {
-                if (board[row, col] != 0)
+                if (board[row, col].Value != 0)
                 {
                     var cell = new SudokuCellPossibilities(row, col, null);
-                    cell.Value = board[row, col];
+                    cell.Value = board[row, col].Value;
                     possibilities.Add(cell);
     
                     continue;
@@ -338,29 +369,30 @@ sealed class GeneticSudokuSolver
             }
     }
 
-    private int GetWrongSolutions(int[,] board)
+    private int GetWrongSolutions((int Value, bool IsDefaultSource, bool IsGood)[,] board)
     {
         var wrongSolutions = 0;
         
         for (var row = 0; row < 9; row++)
         for (var col = 0; col < 9; col++)
         {
-            if (board[row, col] == 0)
+            if (board[row, col].Value == 0)
                 continue;
 
-            if (!IsUnSafe(board, row, col)) continue;
+            //if (!IsUnSafe(board, row, col)) continue;
             
-            wrongSolutions++;
+            if (!board[row, col].IsGood)
+                wrongSolutions++;
         }
 
         return wrongSolutions;
     }
-    private bool IsSafe(int[,] workingBoard, int row, int col, int num, bool checkRowCol = true, bool check3x3 = true)
+    private bool IsSafe((int Value, bool IsDefaultSource, bool IsGood)[,] workingBoard, int row, int col, int num, bool checkRowCol = true, bool check3x3 = true)
     {
         // Check Row and Column
         if (checkRowCol)
             for (var i = 0; i < 9; i++)
-                if (workingBoard[row, i] == num || workingBoard[i, col] == num)
+                if (workingBoard[row, i].Value == num || workingBoard[i, col].Value == num)
                     return false;
     
         // Check 3x3
@@ -370,44 +402,37 @@ sealed class GeneticSudokuSolver
             var startCol = col - col % 3;
             for (var i = 0; i < 3; i++)
             for (var j = 0; j < 3; j++)
-                if (workingBoard[i + startRow, j + startCol] == num)
+                if (workingBoard[i + startRow, j + startCol].Value == num)
                     return false;
         }
     
         return true;
     }
-    private bool IsUnSafe(int[,] workingBoard, int row, int col)
+    
+    private bool IsUnSafe((int Value, bool IsDefaultSource, bool IsGood)[,] workingBoard, int row, int col)
     {
         var counter = 0;
-        var num = workingBoard[row, col];
+        var num = workingBoard[row, col].Value;
         
         // Check Row and Column
         for (var i = 0; i < 9; i++)
         {
-            if (workingBoard[row, i] == num || workingBoard[i, col] == num)
+            if (workingBoard[row, i].Value == num || workingBoard[i, col].Value == num)
             {
                 counter++;
 
-                if (counter >= 2)
-                    return true;
+                if ((row == 0 && col == 0) || (row == 9 && col == 9) || (row == 0 && col == 9) ||
+                    (row == 9 && col == 0))
+                {
+                    if (counter > 2)
+                        return true;
+                }
+                else
+                    if (counter >= 2)
+                        return true;
             }
         }
-
-        // counter = 0;
-        //
-        // // Check 3x3
-        // var startRow = row - row % 3;
-        // var startCol = col - col % 3;
-        // for (var i = 0; i < 3; i++)
-        // for (var j = 0; j < 3; j++)
-        //     if (workingBoard[i + startRow, j + startCol] == num)
-        //     {
-        //         counter++;
-        //
-        //         if (counter >= 2)
-        //             return true;
-        //     }
-
+    
         return false;
     }
 }

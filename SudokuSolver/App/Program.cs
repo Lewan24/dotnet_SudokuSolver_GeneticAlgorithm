@@ -41,9 +41,22 @@ var filePathWithSudokuBoard = "sudoku.txt";
 var serviceSettings = new ServiceSettings()
 {
   PopulationSize = 10,
-  MaxGenerations = 1000,
+  MaxGenerations = 100,
   MutationRate = 0.1f
 };
 
 ISudokuSolverService sudokuSolver = new SudokuSolverService(serviceSettings);
-await sudokuSolver.Run(filePathWithSudokuBoard);
+
+try
+{
+    await sudokuSolver.Run(filePathWithSudokuBoard);
+}
+catch (Exception e)
+{
+    var consoleForeground = Console.ForegroundColor;
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.WriteLine($"There was a problem while solving a sudoku. Error: {e.Message}");
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"Base Exception: {e}");
+    Console.ForegroundColor = consoleForeground;
+}

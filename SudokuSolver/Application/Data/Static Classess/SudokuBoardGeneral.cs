@@ -1,13 +1,11 @@
-using Core.Entities;
-
 namespace Application.Data.Static_Classess;
 
 public static class SudokuBoardGeneral
 {
-    public static Cell[,] ReadSudokuBoardFromFile(string filePath)
+    public static (int Value, bool IsDefaultSource, bool IsGood)[,] ReadSudokuBoardFromFile(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
-        var sudokuBoard = new Cell[9, 9];
+        var sudokuBoard = new (int Value, bool IsDefaultSource, bool IsGood)[9, 9];
 
         for (var i = 0; i < 9; i++)
         {
@@ -20,7 +18,7 @@ public static class SudokuBoardGeneral
                 var isDefaultSource = value != 0;
                 var isGood = value != 0;
 
-                sudokuBoard[i, j] = new Cell(value, isDefaultSource, isGood);
+                sudokuBoard[i, j] = new (value, isDefaultSource, isGood);
             }
         }
 

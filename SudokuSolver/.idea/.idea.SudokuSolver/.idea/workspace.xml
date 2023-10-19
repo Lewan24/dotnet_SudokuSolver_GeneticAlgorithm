@@ -10,8 +10,11 @@
     <list default="true" id="1dfcdeb6-3792-4dc2-8315-c7d7628cfe4f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SudokuSolver/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/App/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/App/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Application/Data/Interfaces/ISudokuSolverService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Application/Data/Interfaces/ISudokuSolverService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/App/sudoku.txt" beforeDir="false" afterPath="$PROJECT_DIR$/App/sudoku.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/Data/Services/SudokuSolverService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Application/Data/Services/SudokuSolverService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/Data/Static Classess/GeneralIO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Application/Data/Static Classess/GeneralIO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/Data/Static Classess/SudokuBoardGeneral.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Application/Data/Static Classess/SudokuBoardGeneral.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Entities/RecordEntities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Entities/Cell.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Core/Entities/Sudoku.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Entities/Sudoku.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -33,28 +36,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.environmentSetup&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.environmentSetup",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;/home/artur/.config/JetBrains/Rider2023.1/resharper-host/DecompilerCache&quot;,
-      &quot;/home/artur/.config/JetBrains/Rider2023.1/resharper-host/SourcesCache&quot;,
-      &quot;/home/artur/.local/share/Symbols/src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\Lewan\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\DecompilerCache",
+      "C:\\Users\\Lewan\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\SourcesCache",
+      "C:\\Users\\Lewan\\AppData\\Local\\Symbols\\src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="App" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
@@ -85,6 +88,7 @@
       <updated>1697609502139</updated>
       <workItem from="1697609503365" duration="25939000" />
       <workItem from="1697704138476" duration="6819000" />
+      <workItem from="1697725332396" duration="11422000" />
     </task>
     <servers />
   </component>
@@ -93,5 +97,24 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Application/Data/Services/SudokuSolverService.cs</url>
+          <line>318</line>
+          <properties documentPath="E:\Pliki\Programowanie\C#\dotnet_SudokuSolver_GeneticAlgorithm\SudokuSolver\Application\Data\Services\SudokuSolverService.cs" initialLine="318" containingFunctionPresentation="Method 'Mutate'">
+            <startOffsets>
+              <option value="11626" />
+            </startOffsets>
+            <endOffsets>
+              <option value="11690" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
