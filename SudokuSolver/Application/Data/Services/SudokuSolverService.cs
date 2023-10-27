@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.Intrinsics.X86;
 using Application.Data.Interfaces;
 using Application.Data.Static_Classess;
 using Core.Entities;
@@ -91,8 +90,6 @@ public class SudokuSolverService : ISudokuSolverService
 
         FillUpSudoku(ref sudokuList);
 
-        ShowPopulationInfo(sudokuList, true);
-        
         RunEvolutionProcess(sudokuList);
 
         _bestSudokuSolution.Fitness = CalculateFitness(_bestSudokuSolution.Board);
@@ -154,13 +151,15 @@ public class SudokuSolverService : ISudokuSolverService
             {
                 if (sudoku.Board[row, col].Value != 0) continue;
                 
-                fillup:
-                var num = _random.Next(1, 10);
+                var possibilities = FindPossibleSolutionsForSpecificBoard(sudoku.Board);
+                var possibleSolutionsForThisRowCol = possibilities.First(c => c.Row == row && c.Column == col).PossibleSolutions;
+
+                if (possibleSolutionsForThisRowCol!.Count == 0)
+                    continue;
                 
-                if (!IsSafe(sudoku.Board, row, col, num, false, true))
-                    goto fillup;
-                    
-                sudoku.Board[row, col].Value = num;
+                var randomSolutionValue = possibleSolutionsForThisRowCol![_random.Next(0, possibleSolutionsForThisRowCol.Count)];
+
+                sudoku.Board[row, col].Value = randomSolutionValue;
             }
             
             sudoku.Fitness = CalculateFitness(sudoku.Board);
@@ -175,6 +174,8 @@ public class SudokuSolverService : ISudokuSolverService
         {
             foreach (var sudoku in population)
                 sudoku.Fitness = CalculateFitness(sudoku.Board);
+            
+            ShowGenerationPopulationInfo(population, generation);
 
             if (population.Any(s => s.Fitness == 81))
             {
@@ -191,7 +192,6 @@ public class SudokuSolverService : ISudokuSolverService
             {
                 // Cross over parents
                 var children = Crossover(parents[i], parents[i + 1]);
-
                 newPopulation.AddRange(children);
             }
 
@@ -200,6 +200,25 @@ public class SudokuSolverService : ISudokuSolverService
     }
 
     /// <summary>
+    /// Shows on console actual population information. If its first population then show global fitness of source board. If not, then shows fitness for every board.
+    /// </summary>
+    /// <param name="sudokuList"></param>
+    /// <param name="generationNumber">Number that show for which generation its population info</param>
+    /// <param name="showBoard">Shown board to console for every sudoku in population</param>
+    private void ShowGenerationPopulationInfo(List<Sudoku> sudokuList, int generationNumber, bool showBoard = false)
+    {
+        Console.WriteLine($"\nGeneration nr {generationNumber + 1}.");
+        for (var index = 0; index < sudokuList.Count; index++)
+        {
+            var sudoku = sudokuList[index];
+            
+            Console.WriteLine($"Sudoku nr {index + 1}. Fitness: {sudoku.ShowFitness(returnString: true)}");
+            if (showBoard)
+                GeneralIO.ShowBoard(sudoku.Board);
+        }
+    }
+    
+    /// <summary>
     /// Calculate for board
     /// </summary>
     /// <param name="board"></param>
@@ -207,14 +226,16 @@ public class SudokuSolverService : ISudokuSolverService
     /// <returns>Fitness is an int number of how good the solution is</returns>
     private int CalculateFitness((int Value, bool IsDefaultSource, bool IsGood)[,] board, bool firstCalculate = false)
     {
-        var possibilities = firstCalculate
-            ? FindPossibleSolutions()
-            : FindPossibleSolutionsForSpecificBoard(board);
-        
         for (var row = 0; row < 9; row++)
         for (var col = 0; col < 9; col++)
         {
-            if (board[row, col].Value != 0 && !IsUnSafe(board, row, col))
+            if (board[row, col].Value == 0)
+            {
+                board[row, col].IsGood = false;
+                continue;
+            }
+            
+            if (!IsUnSafe(board, row, col))
             {
                 board[row, col].IsGood = true;
                 continue;
@@ -223,8 +244,7 @@ public class SudokuSolverService : ISudokuSolverService
             board[row, col].IsGood = false;
         }
         
-        var newFitness = 81 - GeneralIO.ShowEmptyCells(possibilities, true);
-        newFitness -= GetWrongSolutions(board);
+        var newFitness = 81 - GetWrongSolutions(board);
 
         return newFitness;
     }
@@ -239,87 +259,48 @@ public class SudokuSolverService : ISudokuSolverService
     private List<Sudoku> Crossover(Sudoku parent1, Sudoku parent2)
     {
         var children = new List<Sudoku>();
-
-        var isFirstChild = true;
         for (var i = 0; i < 2; i++)
         {
-            var child = CrossParentsIntoChild(new (parent1, parent2), reverseCross: isFirstChild);
-            Mutate(ref child);
-
+            var child = CrossParentsIntoChildAndMutate(new (parent1, parent2));
             children.Add(child);
-            
-            isFirstChild = false;
         }
 
         return children;
     }
 
-    private Sudoku CrossParentsIntoChild((Sudoku parent1, Sudoku Parent2) parents, bool reverseCross)
+    private Sudoku CrossParentsIntoChildAndMutate((Sudoku parent1, Sudoku Parent2) parents)
     {
-        var sudokuBoard1 = parents.parent1.Board;
-        var sudokuBoard2 = parents.Parent2.Board;
+        var fatherBoard = parents.parent1.Board;
+        var motherBoard = parents.Parent2.Board;
 
         var childBoard = new (int Value, bool IsDefaultSource, bool IsGood)[9,9];
+        Array.Copy(_sourceSudoku.Board, childBoard, _sourceSudoku.Board.Length);
 
-        // Copy top row from parent 1
-        for (var row = 0; row < 3; row++)
-            for (var col = 0; col < 9; col++)
-                childBoard[row, col] = sudokuBoard1[row, col];
+        for (var row = 0; row < 9; row++)
+        for (var col = 0; col < 9; col++)
+        {
+            if (childBoard[row, col].IsDefaultSource)
+                continue;
 
-        // Copy 1 middle left column from parent 1
-        for (var row = 3; row < 6; row++)
-            for (var col = 0; col < 3; col++)
-                childBoard[row, col] = sudokuBoard1[row - 3, col];
-
-        var whichParent = _random.NextDouble() <= _settings.MutationRate;
-        
-        // Copy middle row middle column from parent 1 or parent 2, depends on mutation chance rate
-        for (var row = 3; row < 6; row++)
-            for (var col = 3; col < 6; col++)
-                childBoard[row, col] = whichParent ? sudokuBoard1[row - 3, col] : sudokuBoard2[row - 3, col];
-        
-        // Copy 1 middle right column from parent 2
-        for (var row = 3; row < 6; row++)
-            for (var col = 6; col < 9; col++)
-                childBoard[row, col] = sudokuBoard2[row - 3, col];
-        
-        // Copy bottom row from parent 2
-        for (var row = 6; row < 9; row++)
-            for (var col = 0; col < 9; col++)
-                childBoard[row, col] = sudokuBoard2[row - 3, col];
+            childBoard[row, col] = _random.NextDouble() <= 0.5 ? fatherBoard[row, col] : motherBoard[row, col];
+            
+            if (_random.NextDouble() <= _settings.MutationRate)
+            {
+                // Todo: wykonuje sie w nieskonczonosc i nie moze program sie wykonac
+                getRandomNumber:
+                var num = _random.Next(1, 9);
+                if (!IsSafe(childBoard, num, row, col, false, true))
+                    goto getRandomNumber;
+                
+                childBoard[row, col].Value = num;
+            }
+        }
 
         var child = new Sudoku(childBoard);
         return child;
     }
     
-    // Todo: implement mutation
-    private void Mutate(ref Sudoku child)
-    {
-        for (var row = 0; row < 3; row++)
-        for (var col = 0; col < 3; col++)
-        {
-            var mutationChance = _random.NextDouble();
-
-            if (!(mutationChance <= _settings.MutationRate)) continue;
-            
-            var startRow = row * 3; // 3 // max is 5
-            var startCol = col * 3; // 3 // max is 5
-            // get 2 random cells that are not default by source and swap them.
-                
-            getRandomCells:
-            (int X, int Y) cell1xy = new (_random.Next(0, 3), _random.Next(0, 3));
-            (int X, int Y) cell2xy = new (_random.Next(0, 3), _random.Next(0, 3));
-            
-            var cell1 = child.Board[startRow + cell1xy.Y, startCol + cell1xy.X];
-            var cell2 = child.Board[startRow + cell2xy.Y, startCol + cell2xy.X];
-
-            if (cell1.IsDefaultSource || cell2.IsDefaultSource)
-                goto getRandomCells;
-            
-            child.Board[startRow + cell1xy.Y, startCol + cell1xy.X] = cell2;
-            child.Board[startRow + cell2xy.Y, startCol + cell2xy.X] = cell1;
-        }
-    }
+    
     
     /// <summary>
     /// Finds possible solutions to empty cells
